@@ -1,6 +1,6 @@
 # Crop Disease Identifier from Leaf Image
 
-One-line project description.
+Instant, offline crop disease diagnosis and severity estimation using on-device AI for farmers without internet access.
 
 ---
 
@@ -33,7 +33,10 @@ Farmers and agricultural workers, particularly those in rural or low-connectivit
 ## 3. Proposed Solution
 
 ### Solution Overview
+An Electron-based desktop application providing an automated, offline pipeline for plant disease diagnosis.
+
 ### Core Idea
+
 ### Key Features
 
 ---
@@ -53,7 +56,18 @@ User → Frontend → Backend → Model → Database → Response
 ## 5. Database Design
 
 ### ER Diagram
-(Add ER diagram image here)
+```mermaid
+erDiagram
+    DiseaseTreatments {
+        INTEGER DiseaseID PK "Unique identifier mapped to model output index"
+        TEXT CommonName "Common name of the disease"
+        TEXT ScientificName "Scientific classification"
+        TEXT SymptomsSummary "Brief description of visual symptoms"
+        TEXT CulturalControl "Non-chemical management techniques"
+        TEXT ChemicalControl "Recommended fungicide/pesticide treatments"
+        TEXT BiologicalControl "Organic or biological treatment options"
+    }
+```
 
 ### ER Diagram Description
 
@@ -88,11 +102,11 @@ We chose this PlantVillage Dataset because it's an free access kaggle dataset of
 
 ## 8. Technology Stack
 
-### Frontend
-### Backend
-### ML/AI
-### Database
-### Deployment
+### Frontend: React,Typescript
+### Backend: Nodejs,Express
+### ML/AI: Tensorflow
+### Database: SQLite
+### Deployment: Electron
 
 ---
 
