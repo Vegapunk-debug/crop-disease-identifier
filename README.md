@@ -31,7 +31,7 @@ The main technical hurdle in agricultural AI is the clash between computational 
 Our approach solves this by bringing cloud-level processing directly to the user's device. We train state-of-the-art deep learning models (specifically Swin Transformers and CNNs) in PyTorch, and then convert their computation graphs into the highly optimized ONNX format. By embedding these lightweight models inside an Electron desktop app, we can tap directly into the user's local hardware (GPU/NPU) for acceleration. This allows us to run fast, highly accurate inference entirely offline, bypassing the need for an internet connection.
 
 ---
-### 3. Proposed Solution
+## 3. Proposed Solution
 
 ### Solution Overview
 An Electron-based desktop application providing an automated, offline pipeline for plant disease diagnosis.
