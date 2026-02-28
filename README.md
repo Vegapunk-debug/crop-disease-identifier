@@ -188,11 +188,13 @@ Nandan S Acharya
 
 ## 15. Future Scope & Scalability
 
-### Short-Term
--
+**Short-Term Goals**
+* **Multilingual Support:** Adding regional language options to the interface and treatment database so a wider demographic of farmers can easily use the app.
+* **Dedicated Mobile App:** Porting the project to a dedicated mobile app using React Native (with Expo) to run the ML models natively on-device for an even smoother offline experience. 
 
-### Long-Term
--
+**Long-Term Goals**
+* **Explainable AI (Grad-CAM):** Showing farmers exactly *where* the model sees the disease on the leaf by generating visual heatmaps . This transparency helps build real trust in the AI's diagnosis.
+* **Low-Bandwidth Syncing:** Setting up the app to fetch tiny, background updates for the disease database whenever the phone briefly catches an internet connection, ensuring the local knowledge base stays current without needing a heavy download.
 
 ---
 
