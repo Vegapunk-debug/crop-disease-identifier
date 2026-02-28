@@ -6,6 +6,7 @@
   "scripts": {
     "start:server": "cd server && npm start",
     "build:server": "cd server && npm run build",
+    "build": "npm run build:server",
     "test": "jest --passWithNoTests",
     "lint": "echo \"Linting skipped for MVP\""
   },
