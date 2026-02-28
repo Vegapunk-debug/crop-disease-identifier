@@ -15,6 +15,7 @@
     "babel-preset-jest": "^30.2.0",
     "balanced-match": "^1.0.2",
     "baseline-browser-mapping": "^2.10.0",
+    "better-sqlite3": "^12.6.2",
     "brace-expansion": "^2.0.2",
     "braces": "^3.0.3",
     "browserslist": "^4.28.1",
@@ -42,6 +43,7 @@
     "detect-newline": "^3.1.0",
     "dotenv": "^17.3.1",
     "eastasianwidth": "^0.2.0",
+    "electron": "^40.6.1",
     "electron-to-chromium": "^1.5.302",
     "emittery": "^0.13.1",
     "emoji-regex": "^9.2.2",
@@ -134,6 +136,7 @@
     "npm-run-path": "^4.0.1",
     "once": "^1.4.0",
     "onetime": "^5.1.2",
+    "onnxruntime-node": "^1.24.2",
     "p-limit": "^3.1.0",
     "p-locate": "^4.1.0",
     "p-try": "^2.2.0",
@@ -154,6 +157,7 @@
     "resolve-cwd": "^3.0.0",
     "resolve-from": "^5.0.0",
     "semver": "^6.3.1",
+    "sharp": "^0.34.5",
     "shebang-command": "^2.0.0",
     "shebang-regex": "^3.0.0",
     "signal-exit": "^4.1.0",
@@ -201,8 +205,10 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.2",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
