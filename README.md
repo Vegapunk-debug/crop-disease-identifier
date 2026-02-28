@@ -1,6 +1,6 @@
 # Crop Disease Identifier from Leaf Image
 
-One-line project description.
+Instant, offline crop disease diagnosis and severity estimation using on-device AI for farmers without internet access.
 
 ---
 
