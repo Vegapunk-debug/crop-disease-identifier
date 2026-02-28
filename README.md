@@ -25,32 +25,42 @@ Farmers and agricultural workers, particularly those in rural or low-connectivit
 
 ## 2. Problem Understanding & Approach
 
-### Root Cause Analysis
-### Solution Strategy
+**Root Cause Analysis**
+The main technical hurdle in agricultural AI is the clash between computational complexity and real-world connectivity. High-accuracy models typically require powerful cloud servers, rendering them useless in rural, offline environments running on standard consumer hardware. 
+
+**Solution Strategy**
+Our approach solves this by bringing cloud-level processing directly to the user's device. We train state-of-the-art deep learning models (specifically Swin Transformers and CNNs) in PyTorch, and then convert their computation graphs into the highly optimized ONNX format. By embedding these lightweight models inside an Electron desktop app, we can tap directly into the user's local hardware (GPU/NPU) for acceleration. This allows us to run fast, highly accurate inference entirely offline, bypassing the need for an internet connection.
 
 ---
-
-## 3. Proposed Solution
+### 3. Proposed Solution
 
 ### Solution Overview
 An Electron-based desktop application providing an automated, offline pipeline for plant disease diagnosis.
 
-### Core Idea
-
-### Key Features
+**Key Features**
+* **100% Offline Operation:** All disease diagnosis, severity calculation, and treatment lookups happen entirely on the user's local hardware.
+* **SOTA AI Classification:** Leverages the global context understanding of Transformers (like Swin Transformer V2) for highly accurate disease identification.
+* **User-Guided Filtering:** Users select the crop species first, narrowing the AI's focus to ensure highly specialized and accurate results.
+* **Damage Severity Assessment:** Uses pixel-precise semantic segmentation to calculate the exact percentage of diseased versus healthy tissue on the leaf.
+* **Pre-Inference Quality Control:** Automatically detects and rejects blurry images (using Laplacian variance) before they hit the model, saving compute power and preventing false diagnoses.
+* **Test-Time Augmentation (TTA):** The system slightly alters the input image (flips, rotations) on the fly and averages the predictions to guarantee a stable, highly confident result.
+* **Embedded Treatment Database:** A local SQLite database instantly provides symptom breakdowns and actionable treatment strategies (cultural, chemical, and biological).
 
 ---
 
 ## 4. System Architecture
 
 ### High-Level Flow
+
 User $\rightarrow$ Frontend GUI (React) $\rightarrow$ Image Pre-filtering (Laplacian Variance Check in Main Process) $\rightarrow$ AI Models (Local ONNX Runtime Engine) $\rightarrow$ Model Aggregation (Classification + Severity %) $\rightarrow$ Database Lookup (SQLite) $\rightarrow$ Formatted Response on UI.
 
 ### Architecture Description
+
 The application uses an Electron-based architecture that cleanly separates the responsive user interface (Frontend Renderer process) from the intense computational load and hardware binding (Backend Main process).
 
 ### Architecture Diagram
-(Add system architecture diagram image here)
+
+![Offline-First Crop Disease Identifier Architecture](assets/image.png)
 
 ---
 
