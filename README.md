@@ -208,6 +208,4 @@ Nandan S Acharya
 
 ## 17. Impact
 
--
--
--
+This system eliminates the internet connection bottleneck in remote agricultural areas, giving farmers direct access to high-accuracy diagnostic tools. By delivering cloud-level AI performance completely offline, farmers can make immediate, precise treatment decisions. This rapid intervention helps reduce unnecessary chemical costs, stabilizes crop yields, and ultimately increases their overall economic resilience.
