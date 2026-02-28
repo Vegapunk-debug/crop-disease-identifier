@@ -59,7 +59,7 @@ The application uses an Electron-based architecture that cleanly separates the r
 
 ### Architecture Diagram
 
-![Offline-First Crop Disease Identifier Architecture](assets/image.png)
+![Offline-First Crop Disease Identifier Architecture](client/src/assets/image.png)
 
 ---
 

@@ -2,9 +2,9 @@
   "name": "crop-disease-identifier",
   "version": "1.0.0",
   "description": "One-line project description.",
-  "main": "index.js",
+  "main": "server/src/server.ts",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server/src/server.ts",
     "build": "echo \"Building app\"",
     "lint": "echo \"Linting\"",
     "test": "jest --passWithNoTests"
