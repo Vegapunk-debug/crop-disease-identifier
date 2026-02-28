@@ -200,9 +200,8 @@ Nandan S Acharya
 
 ## 16. Known Limitations
 
--
--
--
+* **Dataset Constraints:** The model's real-world accuracy is strictly bound by the quality and class balance of the PlantVillage training dataset. It currently only recognizes the specific crops and diseases it was explicitly trained on.
+* **Lack of Anomaly Detection:** The system currently lacks out-of-distribution (OOD) detection. This means if the camera is pointed at an unsupported plant species, a non-leaf object, or a completely new disease, the model will still attempt to force a classification into one of its known categories rather than flagging it as "Unknown."
 
 ---
 
