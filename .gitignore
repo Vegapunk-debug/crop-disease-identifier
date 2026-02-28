@@ -1,4 +1,23 @@
+# Environment
 .env
-node_modules
-dist
+
+# Dataset (too large for git — re-download via data_pipeline.ipynb)
+ml/dataset/
+
+# Python virtual environments
+ml/venv/
+.venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS files
 .DS_Store
+
+# Node
+node_modules/
+dist/
