@@ -201,7 +201,7 @@ A fully operational, offline-first desktop application using a sophisticated, ca
 |-------------|------|-----------------|
 Rohit Nair P | Project Lead / Backend
 Angelo Nelson | ML Lead / Training
-Nandan S Acharya | Frontend Lead
+Nandan S Acharya | Frontend Lead / DataBase
 
 ---
 
