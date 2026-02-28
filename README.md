@@ -90,7 +90,9 @@ The application utilizes a localized SQLite database with a central DiseaseTreat
 PlantVillage Dataset 
 
 ### Source
-Kaggle: [emmarex/plantdisease](https://www.kaggle.com/datasets/emmarex/plantdisease)
+<a href="https://www.kaggle.com/datasets/emmarex/plantdisease" target="_blank">
+  Kaggle: emmarex/plantdisease
+</a>
 
 ### Data Type
 Thousands of RGB leaf images categorized into 15 classes. It covers both healthy and diseased leaves (like Early Blight and Bacterial Spot) for three main crops: tomatoes, potatoes, and bell peppers.
