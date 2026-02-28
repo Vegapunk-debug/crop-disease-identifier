@@ -71,6 +71,7 @@ erDiagram
 ```
 
 ### ER Diagram Description
+The application utilizes a localized SQLite database with a central DiseaseTreatments entity. This table maps unique disease identifiers (corresponding to the model's output index) to detailed diagnostic metadata and prevention strategies.
 
 ---
 
@@ -94,10 +95,21 @@ We chose this PlantVillage Dataset because it's an free access kaggle dataset of
 
 ## 7. Model Selected
 
-### Model Name
+### Model Name 
+- Swin Transformer V2 (Classification Backbone)
+- U-Net w/ EfficientNet-B0 (Segmentation Decoder)
+
 ### Selection Reasoning
+Swin V2 utilizes shifted-window self-attention, construct hierarchically a profound global understanding of the visual space, critical for identifying systemic disease patterns that local convolutions miss.
+U-Net w/ EfficientNet-B0 provides precise spatial localization and high-resolution spatial contouring, critical for accurate pixel-wise severity calculation.
+
 ### Alternatives Considered
+- MobileNetV3 (Inaccurate on current hardware budget)
+- ConvNeXt (Lower performance on global disease patterns)
+
 ### Evaluation Metrics
+Classification: Top-1 Accuracy, Macro-F1 Score.
+Segmentation: Mean Intersection over Union (mIoU), Dice Coefficient.
 
 ---
 
@@ -126,34 +138,37 @@ We chose this PlantVillage Dataset because it's an free access kaggle dataset of
 ## 10. Module-wise Development & Deliverables
 
 ### Checkpoint 1: Research & Planning
-- Deliverables:
+- Deliverables: Finalized dataset manifest, training/validation splits, model configurations.
 
 ### Checkpoint 2: Backend Development
-- Deliverables:
+- Deliverables: Two finalized, serialized, high-accuracy ONNX models: Classification (Swin V2) and Segmentation (U-Net).
 
 ### Checkpoint 3: Frontend Development
-- Deliverables:
+- Deliverables: Functioning Electron Main Process structure, optimized SQLite database integration via better-sqlite3 with populated treatment data.
 
 ### Checkpoint 4: Model Training
-- Deliverables:
+- Deliverables: Implementation of the ONNX Inference pipeline within Node.js, blur-detection filter, and pre-inference tensor preprocessing.
 
 ### Checkpoint 5: Model Integration
-- Deliverables:
+- Deliverables: Complete React-based GUI, intuitive plant selection flow, diagnostic report display, and real-time inference monitoring.
 
 ### Checkpoint 6: Deployment
-- Deliverables:
+- Deliverables: Final cross-platform application installers (e.g., .exe, .dmg, .AppImage)
 
 ---
 
 ## 11. End-to-End Workflow
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
+1.Farmer launches the application on a desktop computer.
+2.On the home screen, they are prompted to select their plant type (e.g., Tomato)..
+3.The farmer captures or uploads a leaf photograph.
+4.The backend main process immediately converts the image and runs the blur-detection filter. If the image is blurry, it is immediately rejected, and the user is prompted to retake it..
+5.If passed, the image tensor is routed through the Swin Transformer V2 model for high-accuracy disease identification.
+6.Simultaneously, the image is passed to the U-Net model to create a diseased pixel mask.
+7.The main process averages model predictions (via TTA) for classification stability and calculates the exact severity percentage.
+8.The main process queries the local SQLite database for symptoms, symptoms summary, and control strategies.
+9.The finalized, structured report, combining the diagnosis, severity estimate, and actionable treatment steps, is rendered to the farmer's screen.
+10.The farmer can then save the diagnosis locally or export it as a PDF for future reference.
 
 ---
 
@@ -167,10 +182,7 @@ We chose this PlantVillage Dataset because it's an free access kaggle dataset of
 
 ## 13. Hackathon Deliverables Summary
 
--
--
--
--
+A fully operational, offline-first desktop application using a sophisticated, cascaded ONNX inference pipeline (Transformer + Segmentation) for agricultural diagnostics.
 
 ---
 
@@ -178,9 +190,9 @@ We chose this PlantVillage Dataset because it's an free access kaggle dataset of
 
 | Member Name | Role | Responsibilities |
 |-------------|------|-----------------|
-Rohit Nair P
-Angelo Nelson
-Nandan S Acharya
+Rohit Nair P | Project Lead / Backend
+Angelo Nelson | ML Lead / Training
+Nandan S Acharya | Frontend Lead
 
 ---
 
