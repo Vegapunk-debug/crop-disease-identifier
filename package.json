@@ -7,7 +7,10 @@
     "start": "node index.js",
     "build": "echo \"Building app\"",
     "lint": "echo \"Linting\"",
-    "test": "echo \"Running tests\""
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node"
   },
   "repository": {
     "type": "git",
@@ -19,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/Vegapunk-debug/crop-disease-identifier/issues"
   },
-  "homepage": "https://github.com/Vegapunk-debug/crop-disease-identifier#readme"
+  "homepage": "https://github.com/Vegapunk-debug/crop-disease-identifier#readme",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
 }
