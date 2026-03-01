@@ -187,7 +187,7 @@ Segmentation: Mean Intersection over Union (mIoU), Dice Coefficient.
 
 - Live Demo Link(Mac): [https://drive.google.com/drive/folders/1PxCOirurar8vtZWZUrtAi0g5HQV7F-l8?usp=sharing](https://drive.google.com/drive/folders/1qDcAtOL26TitKLCMfgURLtPpVEBgenYk?usp=sharing)
 - Live Demo Link(Windows): https://drive.google.com/drive/folders/1PxCOirurar8vtZWZUrtAi0g5HQV7F-l8?usp=sharing
-- Demo Video Link:
+- Demo Video Link: [https://drive.google.com/file/d/1YEJWf1gPw0Rjq5ij9SOi8UwQN9VT1KPm/view?usp=sharing] 
 - GitHub Repository: https://github.com/Vegapunk-debug/crop-disease-identifier
 
 ---
