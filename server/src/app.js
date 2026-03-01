@@ -2,13 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const { diagnoseImage, checkBlur } = require('./inference');
+const { diagnoseImageWithTTA, checkBlur } = require('./inference');
 const { getTreatmentByCommonName, getSpeciesList } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middlewaree
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -48,7 +48,7 @@ app.post('/api/diagnose', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'Species is required' });
     }
 
-    // Step 1: Blur detection — reject blurry images before spending compute on ONNX
+    // Step 1: Blur detection
     const blurResult = await checkBlur(req.file.buffer);
     if (blurResult.blurry) {
       return res.status(422).json({
@@ -59,8 +59,8 @@ app.post('/api/diagnose', upload.single('image'), async (req, res) => {
       });
     }
 
-    // Step 2: Run inference
-    const diagnosis = await diagnoseImage(req.file.buffer, species);
+    // Step 2: Run TTA inference (3 geometric variants, averaged logits)
+    const diagnosis = await diagnoseImageWithTTA(req.file.buffer, species);
 
     // Look up treatment
     const treatment = getTreatmentByCommonName(diagnosis.commonName);
@@ -73,11 +73,14 @@ app.post('/api/diagnose', upload.single('image'), async (req, res) => {
       diseaseName: diagnosis.diseaseName,
       commonName: diagnosis.commonName,
       logit: diagnosis.logit,
+      confidence: diagnosis.confidence,
       treatment: treatment || {
         common_name: diagnosis.commonName,
         symptoms: 'No detailed symptom data available.',
         cultural_control: 'Consult local agricultural extension services.',
-        chemical_control: 'Consult local agricultural extension services.'
+        chemical_control: 'Consult local agricultural extension services.',
+        biological_control: 'Consult local agricultural extension services.',
+        prevention: 'Consult local agricultural extension services.'
       }
     });
   } catch (err) {

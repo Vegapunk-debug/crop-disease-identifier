@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
 
 const API_URL = window.location.port === '5173' ? 'http://localhost:3001' : '';
 
@@ -7,6 +8,8 @@ interface Treatment {
   symptoms: string;
   cultural_control: string;
   chemical_control: string;
+  biological_control?: string;
+  prevention?: string;
 }
 
 interface DiagnosisResponse {
@@ -17,6 +20,7 @@ interface DiagnosisResponse {
   diseaseName: string;
   commonName: string;
   logit: number;
+  confidence: number;
   treatment: Treatment;
 }
 
@@ -27,6 +31,137 @@ interface SpeciesInfo {
 }
 
 type AppState = 'select' | 'uploading' | 'results';
+
+// ─── PDF Export ──────────────────────────────────────────────────────────────
+function exportPDF(result: DiagnosisResponse) {
+  const doc = new jsPDF();
+  const margin = 20;
+  let y = margin;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - margin * 2;
+
+  // Header
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Crop Disease Diagnosis Report', margin, y);
+  y += 10;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text(`Generated: ${new Date().toLocaleString()}  •  100% Offline AI Analysis`, margin, y);
+  y += 4;
+
+  // Divider
+  doc.setDrawColor(16, 185, 129);
+  doc.setLineWidth(0.8);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+
+  doc.setTextColor(0, 0, 0);
+
+  // Diagnosis Summary
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Diagnosis Summary', margin, y);
+  y += 8;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+
+  const isHealthy = result.diseaseKey?.includes('healthy');
+  const summaryItems = [
+    ['Species:', result.speciesName],
+    ['Disease:', result.diseaseName],
+    ['Full Classification:', result.commonName],
+    ['AI Confidence:', `${result.confidence}%`],
+    ['Status:', isHealthy ? 'HEALTHY — No disease detected' : 'DISEASE DETECTED — Treatment recommended'],
+  ];
+
+  for (const [label, value] of summaryItems) {
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(value, margin + 40, y);
+    y += 6;
+  }
+  y += 6;
+
+  // Helper to add sections with word wrap
+  const addSection = (title: string, body: string) => {
+    if (!body) return;
+    // Check if we need a new page
+    if (y > 260) {
+      doc.addPage();
+      y = margin;
+    }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, margin, y);
+    y += 7;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(body, contentWidth);
+    for (const line of lines) {
+      if (y > 280) { doc.addPage(); y = margin; }
+      doc.text(line, margin, y);
+      y += 5;
+    }
+    y += 6;
+  };
+
+  addSection('Symptoms', result.treatment.symptoms);
+
+  if (!isHealthy) {
+    addSection('Cultural Control', result.treatment.cultural_control);
+    addSection('Chemical Control', result.treatment.chemical_control);
+    if (result.treatment.biological_control) {
+      addSection('Biological Control', result.treatment.biological_control);
+    }
+    if (result.treatment.prevention) {
+      addSection('Prevention', result.treatment.prevention);
+    }
+  } else {
+    addSection('Maintenance Recommendations', result.treatment.cultural_control);
+    if (result.treatment.prevention) {
+      addSection('Ongoing Prevention', result.treatment.prevention);
+    }
+  }
+
+  // Footer
+  if (y > 270) { doc.addPage(); y = margin; }
+  y += 4;
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 6;
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('Crop Disease Identifier — Powered by Swin Transformer V2 + ONNX Runtime', margin, y);
+  y += 4;
+  doc.text('This report was generated entirely offline using on-device AI inference.', margin, y);
+
+  doc.save(`diagnosis_${result.speciesName}_${result.diseaseName}_${Date.now()}.pdf`);
+}
+
+// ─── Confidence Badge ────────────────────────────────────────────────────────
+function ConfidenceBadge({ confidence }: { confidence: number }) {
+  let colorClasses = 'text-red-700 bg-red-100 border-red-200';
+  let label = 'Low';
+  if (confidence >= 80) {
+    colorClasses = 'text-emerald-700 bg-emerald-100 border-emerald-200';
+    label = 'High';
+  } else if (confidence >= 50) {
+    colorClasses = 'text-amber-700 bg-amber-100 border-amber-200';
+    label = 'Medium';
+  }
+  return (
+    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border ${colorClasses}`}>
+      {label}: {confidence}%
+    </span>
+  );
+}
 
 function App() {
   const [species, setSpecies] = useState<SpeciesInfo[]>([]);
@@ -209,7 +344,7 @@ function App() {
                           <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                           <span className="text-sm font-semibold text-gray-700">Analyzing {uploadedFileName}...</span>
                         </div>
-                        <p className="text-xs text-gray-400">Running ONNX inference locally</p>
+                        <p className="text-xs text-gray-400">Running TTA inference (3 geometric variants)</p>
                       </div>
                     ) : (
                       <>
@@ -235,26 +370,38 @@ function App() {
         {appState === 'results' && result && (
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${isHealthy
                     ? 'text-emerald-700 bg-emerald-100 border border-emerald-200'
                     : 'text-red-700 bg-red-100 border border-red-200'
                     }`}>
                     {isHealthy ? '✓ HEALTHY' : '⚠ DISEASE DETECTED'}
                   </span>
+                  <ConfidenceBadge confidence={result.confidence} />
                   <span className="text-xs text-gray-400 font-mono">Index: {result.classIndex}</span>
                 </div>
                 <h2 className="text-3xl font-black text-gray-900">{result.commonName}</h2>
                 <p className="text-sm text-gray-500 mt-1">{result.speciesName} — {result.diseaseName}</p>
               </div>
-              <button
-                onClick={handleReset}
-                className="px-5 py-2.5 bg-emerald-600 text-white font-semibold text-sm rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200"
-              >
-                New Scan
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => exportPDF(result)}
+                  className="px-4 py-2.5 bg-white text-gray-700 font-semibold text-sm rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Export PDF
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-5 py-2.5 bg-emerald-600 text-white font-semibold text-sm rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200"
+                >
+                  New Scan
+                </button>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-[1fr_1.5fr] gap-6">
@@ -289,11 +436,7 @@ function App() {
                     {/* Cultural Control */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-emerald-300 transition-colors">
                       <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                          </svg>
-                        </span>
+                        <span className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">🌱</span>
                         Cultural Control
                       </h3>
                       <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.cultural_control}</p>
@@ -302,15 +445,33 @@ function App() {
                     {/* Chemical Control */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-purple-300 transition-colors">
                       <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-                          </svg>
-                        </span>
+                        <span className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">🧪</span>
                         Chemical Control
                       </h3>
                       <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.chemical_control}</p>
                     </div>
+
+                    {/* Biological Control */}
+                    {result.treatment.biological_control && (
+                      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-teal-300 transition-colors">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                          <span className="w-7 h-7 bg-teal-100 rounded-lg flex items-center justify-center text-teal-600">🦠</span>
+                          Biological Control
+                        </h3>
+                        <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.biological_control}</p>
+                      </div>
+                    )}
+
+                    {/* Prevention */}
+                    {result.treatment.prevention && (
+                      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-amber-300 transition-colors">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                          <span className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600">🛡️</span>
+                          Prevention
+                        </h3>
+                        <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.prevention}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 

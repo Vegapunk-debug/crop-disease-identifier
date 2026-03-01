@@ -90,6 +90,50 @@ function maskedArgmax(logits, validIndices) {
   return { index: bestIndex, value: bestValue, maskedLogits };
 }
 
+// ─── Softmax helper ─────────────────────────────────────────────────────────
+function softmax(logits) {
+  const maxLogit = Math.max(...logits);
+  const exps = logits.map(l => Math.exp(l - maxLogit));
+  const sumExps = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / sumExps);
+}
+
+// ─── TTA: Create 3 geometric variants ───────────────────────────────────────
+async function createTTABuffers(imageBuffer) {
+  const base = sharp(imageBuffer).rotate().resize(IMAGE_SIZE, IMAGE_SIZE, { fit: 'fill' }).removeAlpha();
+
+  const [original, flipped, rotated] = await Promise.all([
+    base.clone().raw().toBuffer({ resolveWithObject: true }),
+    base.clone().flop().raw().toBuffer({ resolveWithObject: true }),       // horizontal flip
+    base.clone().rotate(90).resize(IMAGE_SIZE, IMAGE_SIZE).raw().toBuffer({ resolveWithObject: true }) // 90° rotation
+  ]);
+
+  return [original.data, flipped.data, rotated.data];
+}
+
+function rawBufferToTensor(data) {
+  const pixelsPerChannel = IMAGE_SIZE * IMAGE_SIZE;
+  const tensorData = new Float32Array(CHANNELS * pixelsPerChannel);
+
+  for (let y = 0; y < IMAGE_SIZE; y += 1) {
+    for (let x = 0; x < IMAGE_SIZE; x += 1) {
+      const hwIndex = y * IMAGE_SIZE + x;
+      const bufferIndex = hwIndex * CHANNELS;
+
+      const r = data[bufferIndex] / 255;
+      const g = data[bufferIndex + 1] / 255;
+      const b = data[bufferIndex + 2] / 255;
+
+      tensorData[hwIndex] = (r - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
+      tensorData[pixelsPerChannel + hwIndex] = (g - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
+      tensorData[(2 * pixelsPerChannel) + hwIndex] = (b - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
+    }
+  }
+
+  return new ort.Tensor('float32', tensorData, [1, CHANNELS, IMAGE_SIZE, IMAGE_SIZE]);
+}
+
+// ─── Single inference (kept for fallback) ───────────────────────────────────
 async function diagnoseImage(imageBuffer, speciesKey) {
   const session = await getSession();
   const tensor = await preprocessImageToTensor(imageBuffer);
@@ -98,8 +142,7 @@ async function diagnoseImage(imageBuffer, speciesKey) {
 
   const feeds = { [session.inputNames[0]]: tensor };
   const outputs = await session.run(feeds);
-  const outputName = session.outputNames[0];
-  const logits = outputs[outputName].data;
+  const logits = outputs[session.outputNames[0]].data;
 
   const { index: predictedIndex, value: predictedLogit } = maskedArgmax(logits, validIndices);
 
@@ -112,6 +155,9 @@ async function diagnoseImage(imageBuffer, speciesKey) {
     throw new Error(`Predicted index ${predictedIndex} not found in species map`);
   }
 
+  const probs = softmax(Array.from(logits));
+  const confidence = Math.round(probs[predictedIndex] * 10000) / 100;
+
   const speciesName = prettifyLabel(speciesKey);
   const diseaseName = prettifyLabel(diseaseKey);
 
@@ -122,7 +168,66 @@ async function diagnoseImage(imageBuffer, speciesKey) {
     diseaseKey,
     diseaseName,
     commonName: `${speciesName} ${diseaseName}`,
-    logit: predictedLogit
+    logit: predictedLogit,
+    confidence
+  };
+}
+
+// ─── TTA inference (average logits from 3 variants) ─────────────────────────
+async function diagnoseImageWithTTA(imageBuffer, speciesKey) {
+  const session = await getSession();
+  const speciesMap = toSpeciesMap(speciesKey);
+  const validIndices = Object.values(speciesMap);
+  const numClasses = 38;
+
+  // Create 3 geometric variants and run them through the model
+  const ttaBuffers = await createTTABuffers(imageBuffer);
+  const tensors = ttaBuffers.map(buf => rawBufferToTensor(buf));
+
+  const results = await Promise.all(
+    tensors.map(t => session.run({ [session.inputNames[0]]: t }))
+  );
+
+  // Average raw logits (Approach B: average before softmax)
+  const avgLogits = new Float32Array(numClasses);
+  for (const output of results) {
+    const logits = output[session.outputNames[0]].data;
+    for (let i = 0; i < numClasses; i++) {
+      avgLogits[i] += logits[i] / results.length;
+    }
+  }
+
+  // Apply species logit mask, then find winner
+  const { index: predictedIndex, value: predictedLogit } = maskedArgmax(avgLogits, validIndices);
+
+  if (predictedIndex < 0) {
+    throw new Error(`No valid indices available for species: ${speciesKey}`);
+  }
+
+  const diseaseKey = Object.keys(speciesMap).find((key) => speciesMap[key] === predictedIndex);
+  if (!diseaseKey) {
+    throw new Error(`Predicted index ${predictedIndex} not found in species map`);
+  }
+
+  // Compute softmax confidence on masked logits
+  const maskedForSoftmax = Array.from(avgLogits).map((v, i) =>
+    validIndices.includes(i) ? v : -Infinity
+  );
+  const probs = softmax(maskedForSoftmax);
+  const confidence = Math.round(probs[predictedIndex] * 10000) / 100;
+
+  const speciesName = prettifyLabel(speciesKey);
+  const diseaseName = prettifyLabel(diseaseKey);
+
+  return {
+    speciesKey,
+    speciesName,
+    classIndex: predictedIndex,
+    diseaseKey,
+    diseaseName,
+    commonName: `${speciesName} ${diseaseName}`,
+    logit: predictedLogit,
+    confidence
   };
 }
 
@@ -177,5 +282,6 @@ async function checkBlur(imageBuffer) {
 
 module.exports = {
   diagnoseImage,
+  diagnoseImageWithTTA,
   checkBlur
 };
