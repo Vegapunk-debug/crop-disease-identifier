@@ -13,9 +13,7 @@ let sessionPromise;
 
 function getSession() {
   if (!sessionPromise) {
-    sessionPromise = ort.InferenceSession.create(MODEL_PATH, {
-      executionProviders: ['cpuExecutionProvider']
-    });
+    sessionPromise = ort.InferenceSession.create(MODEL_PATH);
   }
   return sessionPromise;
 }
@@ -42,7 +40,6 @@ async function preprocessImageToTensor(imageBuffer) {
     .rotate()
     .resize(IMAGE_SIZE, IMAGE_SIZE, { fit: 'fill' })
     .removeAlpha()
-    .toColourspace('rgb')
     .raw()
     .toBuffer({ resolveWithObject: true });
 

@@ -1,28 +1,15 @@
 {
   "name": "crop-disease-identifier",
   "version": "1.0.0",
-  "description": "Instant, offline crop disease diagnosis",
+  "description": "AI-powered crop disease identification from leaf images",
   "private": true,
   "scripts": {
-    "start:server": "cd server && npm start",
-    "build:server": "cd server && npm run build",
-    "build": "npm run build:server",
     "dev": "concurrently \"npm run dev --prefix client\" \"npm start --prefix server\"",
-    "test": "jest --passWithNoTests",
-    "lint": "echo \"Linting skipped for MVP\""
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Vegapunk-debug/crop-disease-identifier.git"
+    "start:server": "cd server && npm start",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "cd server && npm install && cd ../client && npm install"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "concurrently": "^9.2.1",
-    "eslint": "^8.57.1",
-    "jest": "^30.2.0",
-    "typescript-eslint": "^8.56.1"
-  },
-  "dependencies": {
-    "eslist": "^1.0.0-beta.1"
+    "concurrently": "^9.2.1"
   }
 }
