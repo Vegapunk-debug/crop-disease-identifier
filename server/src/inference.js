@@ -126,6 +126,56 @@ async function diagnoseImage(imageBuffer, speciesKey) {
   };
 }
 
+// ─── Blur Detection (Variance of the Laplacian) ────────────────────────────
+const BLUR_THRESHOLD = 100;
+const BLUR_SIZE = 256;
+
+async function checkBlur(imageBuffer) {
+  // Convert to grayscale and resize
+  const { data } = await sharp(imageBuffer)
+    .rotate()
+    .resize(BLUR_SIZE, BLUR_SIZE, { fit: 'fill' })
+    .greyscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // Laplacian kernel: [0, 1, 0], [1, -4, 1], [0, 1, 0]
+  const w = BLUR_SIZE;
+  const h = BLUR_SIZE;
+  const laplacian = new Float32Array((w - 2) * (h - 2));
+  let sum = 0;
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const val =
+        data[(y - 1) * w + x] +       // top
+        data[(y + 1) * w + x] +       // bottom
+        data[y * w + (x - 1)] +       // left
+        data[y * w + (x + 1)] -       // right
+        4 * data[y * w + x];          // center
+      const idx = (y - 1) * (w - 2) + (x - 1);
+      laplacian[idx] = val;
+      sum += val;
+    }
+  }
+
+  const n = laplacian.length;
+  const mean = sum / n;
+  let varianceSum = 0;
+  for (let i = 0; i < n; i++) {
+    const diff = laplacian[i] - mean;
+    varianceSum += diff * diff;
+  }
+  const variance = varianceSum / n;
+
+  return {
+    blurry: variance < BLUR_THRESHOLD,
+    variance: Math.round(variance * 100) / 100,
+    threshold: BLUR_THRESHOLD
+  };
+}
+
 module.exports = {
-  diagnoseImage
+  diagnoseImage,
+  checkBlur
 };

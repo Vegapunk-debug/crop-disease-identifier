@@ -2,13 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const { diagnoseImage } = require('./inference');
+const { diagnoseImage, checkBlur } = require('./inference');
 const { getTreatmentByCommonName, getSpeciesList } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middlewaree
 app.use(cors());
 app.use(express.json());
 
@@ -48,7 +48,18 @@ app.post('/api/diagnose', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'Species is required' });
     }
 
-    // Run inference
+    // Step 1: Blur detection — reject blurry images before spending compute on ONNX
+    const blurResult = await checkBlur(req.file.buffer);
+    if (blurResult.blurry) {
+      return res.status(422).json({
+        error: 'BLURRY_IMAGE',
+        message: 'Image is too blurry for reliable diagnosis. Please retake with a clearer, well-focused photo.',
+        variance: blurResult.variance,
+        threshold: blurResult.threshold
+      });
+    }
+
+    // Step 2: Run inference
     const diagnosis = await diagnoseImage(req.file.buffer, species);
 
     // Look up treatment

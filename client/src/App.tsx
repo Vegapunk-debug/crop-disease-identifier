@@ -76,6 +76,11 @@ function App() {
 
       if (!res.ok) {
         const errData = await res.json();
+        if (errData.error === 'BLURRY_IMAGE') {
+          setError(`📸 ${errData.message} (Sharpness score: ${errData.variance}, minimum: ${errData.threshold})`);
+          setAppState('select');
+          return;
+        }
         throw new Error(errData.error || 'Diagnosis failed');
       }
 

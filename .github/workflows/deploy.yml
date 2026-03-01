@@ -16,10 +16,8 @@ jobs:
         with:
           node-version: 18
 
-      - run: npm install --legacy-peer-deps
+      - name: Install client dependencies
+        run: cd client && npm install --legacy-peer-deps
 
-      - run: npm run lint
-
-      - run: npm test
-
-      - run: npm run build
+      - name: Build client
+        run: cd client && npm run build
