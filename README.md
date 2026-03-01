@@ -3,10 +3,9 @@
 ## Instant, offline crop disease diagnosis and severity estimation using on-device AI for farmers without internet access.
 ---
 
-### 📥 Download the Application
+## Download the Application
 
 You can download the compiled application files directly from Google Drive:
-
 ***[Download for Windows (.exe)]https://drive.google.com/drive/folders/1qDcAtOL26TitKLCMfgURLtPpVEBgenYk?usp=sharing**
 * **[Download for macOS (.dmg)]https://drive.google.com/drive/folders/1PxCOirurar8vtZWZUrtAi0g5HQV7F-l8?usp=sharing**
 
