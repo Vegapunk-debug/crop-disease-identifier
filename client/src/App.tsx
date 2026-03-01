@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 
 const API_URL = window.location.port === '5173' ? 'http://localhost:3001' : '';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 interface Treatment {
   common_name: string;
   symptoms: string;
@@ -32,84 +33,207 @@ interface SpeciesInfo {
 
 type AppState = 'select' | 'uploading' | 'results';
 
+// ─── Icons (Lucide-style SVGs) ───────────────────────────────────────────────
+const Icons = {
+  leaf: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10Z" />
+      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    </svg>
+  ),
+  upload: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  ),
+  search: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+    </svg>
+  ),
+  download: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  ),
+  check: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
+  alertTriangle: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <path d="M12 9v4" /><path d="M12 17h.01" />
+    </svg>
+  ),
+  x: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+    </svg>
+  ),
+  flask: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+      <path d="M8.5 2h7" /><path d="M7 16.5h10" />
+    </svg>
+  ),
+  sprout: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 20h10" /><path d="M10 20c5.5-2.5.8-6.4 3-10" />
+      <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8Z" />
+      <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2Z" />
+    </svg>
+  ),
+  microscope: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 18h8" /><path d="M3 22h18" /><path d="M14 22a7 7 0 1 0 0-14h-1" />
+      <path d="M9 14h2" /><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z" />
+      <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" />
+    </svg>
+  ),
+  shield: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  ),
+  loader: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  ),
+};
+
 // ─── PDF Export ──────────────────────────────────────────────────────────────
-function exportPDF(result: DiagnosisResponse) {
+async function exportPDF(result: DiagnosisResponse, imageDataUrl: string | null) {
   const doc = new jsPDF();
   const margin = 20;
   let y = margin;
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - margin * 2;
 
-  // Header
-  doc.setFontSize(22);
+  // ── Header bar
+  doc.setFillColor(22, 163, 74); // emerald-600
+  doc.rect(0, 0, pageWidth, 12, 'F');
+  y = 24;
+
+  doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(17, 24, 39);
   doc.text('Crop Disease Diagnosis Report', margin, y);
-  y += 10;
+  y += 7;
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(120, 120, 120);
-  doc.text(`Generated: ${new Date().toLocaleString()}  •  100% Offline AI Analysis`, margin, y);
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Report generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${new Date().toLocaleTimeString()}`, margin, y);
   y += 4;
+  doc.text('Analysis performed using on-device AI inference (Swin Transformer V2 + ONNX Runtime)', margin, y);
+  y += 8;
 
-  // Divider
-  doc.setDrawColor(16, 185, 129);
-  doc.setLineWidth(0.8);
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.4);
   doc.line(margin, y, pageWidth - margin, y);
   y += 10;
 
-  doc.setTextColor(0, 0, 0);
+  doc.setTextColor(17, 24, 39);
 
-  // Diagnosis Summary
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Diagnosis Summary', margin, y);
-  y += 8;
+  // ── Image section
+  if (imageDataUrl) {
+    try {
+      const imgWidth = 50;
+      const imgHeight = 50;
+      doc.addImage(imageDataUrl, 'JPEG', margin, y, imgWidth, imgHeight);
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
+      // Summary next to image
+      const textX = margin + imgWidth + 10;
+      const textWidth = contentWidth - imgWidth - 10;
+      let iy = y + 2;
 
-  const isHealthy = result.diseaseKey?.includes('healthy');
-  const summaryItems = [
-    ['Species:', result.speciesName],
-    ['Disease:', result.diseaseName],
-    ['Full Classification:', result.commonName],
-    ['AI Confidence:', `${result.confidence}%`],
-    ['Status:', isHealthy ? 'HEALTHY — No disease detected' : 'DISEASE DETECTED — Treatment recommended'],
-  ];
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(result.commonName, textX, iy);
+      iy += 7;
 
-  for (const [label, value] of summaryItems) {
-    doc.setFont('helvetica', 'bold');
-    doc.text(label, margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(value, margin + 40, y);
-    y += 6;
-  }
-  y += 6;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      doc.text(`Species: ${result.speciesName}`, textX, iy);
+      iy += 5;
+      doc.text(`Condition: ${result.diseaseName}`, textX, iy);
+      iy += 5;
 
-  // Helper to add sections with word wrap
-  const addSection = (title: string, body: string) => {
-    if (!body) return;
-    // Check if we need a new page
-    if (y > 260) {
-      doc.addPage();
-      y = margin;
+      const isHealthy = result.diseaseKey?.includes('healthy');
+      if (isHealthy) {
+        doc.setTextColor(22, 163, 74);
+        doc.text('Status: Healthy — No disease detected', textX, iy);
+      } else {
+        doc.setTextColor(220, 38, 38);
+        doc.text('Status: Disease Detected — Treatment recommended', textX, iy);
+      }
+      iy += 5;
+
+      doc.setTextColor(107, 114, 128);
+      doc.text(`AI Confidence: ${result.confidence}%`, textX, iy);
+      iy += 5;
+
+      const wrappedSymptoms = doc.splitTextToSize(`Symptoms: ${result.treatment.symptoms}`, textWidth);
+      doc.setTextColor(55, 65, 81);
+      for (const line of wrappedSymptoms.slice(0, 3)) {
+        doc.text(line, textX, iy);
+        iy += 4.5;
+      }
+
+      y = Math.max(y + imgHeight + 8, iy + 4);
+    } catch {
+      y += 4;
     }
-    doc.setFontSize(12);
+  } else {
+    // No image — plain text summary
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(title, margin, y);
+    doc.text(result.commonName, margin, y);
     y += 7;
-
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(body, contentWidth);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Species: ${result.speciesName}  |  Condition: ${result.diseaseName}  |  Confidence: ${result.confidence}%`, margin, y);
+    y += 10;
+  }
+
+  doc.setTextColor(17, 24, 39);
+
+  // Helper for sections
+  const addSection = (title: string, body: string) => {
+    if (!body) return;
+    if (y > 258) { doc.addPage(); y = margin; }
+
+    doc.setFillColor(249, 250, 251);
+    doc.roundedRect(margin, y - 4, contentWidth, 7, 1, 1, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(55, 65, 81);
+    doc.text(title, margin + 3, y);
+    y += 7;
+
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    const lines = doc.splitTextToSize(body, contentWidth - 6);
     for (const line of lines) {
       if (y > 280) { doc.addPage(); y = margin; }
-      doc.text(line, margin, y);
-      y += 5;
+      doc.text(line, margin + 3, y);
+      y += 4.5;
     }
-    y += 6;
+    y += 5;
   };
+
+  const isHealthy = result.diseaseKey?.includes('healthy');
 
   addSection('Symptoms', result.treatment.symptoms);
 
@@ -131,38 +255,61 @@ function exportPDF(result: DiagnosisResponse) {
 
   // Footer
   if (y > 270) { doc.addPage(); y = margin; }
-  y += 4;
-  doc.setDrawColor(200, 200, 200);
+  y += 2;
+  doc.setDrawColor(229, 231, 235);
   doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 6;
-  doc.setFontSize(8);
-  doc.setTextColor(150, 150, 150);
-  doc.text('Crop Disease Identifier — Powered by Swin Transformer V2 + ONNX Runtime', margin, y);
-  y += 4;
-  doc.text('This report was generated entirely offline using on-device AI inference.', margin, y);
+  y += 5;
+  doc.setFontSize(7.5);
+  doc.setTextColor(156, 163, 175);
+  doc.text('Crop Disease Identifier  |  Swin Transformer V2  |  ONNX Runtime  |  100% Offline Analysis', margin, y);
+  y += 3.5;
+  doc.text('This report was generated entirely on-device. No data was transmitted externally.', margin, y);
 
-  doc.save(`diagnosis_${result.speciesName}_${result.diseaseName}_${Date.now()}.pdf`);
+  const filename = `diagnosis-${result.speciesName.toLowerCase()}-${result.diseaseName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.pdf`;
+  doc.save(filename);
 }
 
 // ─── Confidence Badge ────────────────────────────────────────────────────────
 function ConfidenceBadge({ confidence }: { confidence: number }) {
-  let colorClasses = 'text-red-700 bg-red-100 border-red-200';
-  let label = 'Low';
+  let bg = 'bg-red-50 text-red-700 border-red-200';
+  let label = 'Low Confidence';
   if (confidence >= 80) {
-    colorClasses = 'text-emerald-700 bg-emerald-100 border-emerald-200';
-    label = 'High';
+    bg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    label = 'High Confidence';
   } else if (confidence >= 50) {
-    colorClasses = 'text-amber-700 bg-amber-100 border-amber-200';
-    label = 'Medium';
+    bg = 'bg-amber-50 text-amber-700 border-amber-200';
+    label = 'Moderate Confidence';
   }
   return (
-    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border ${colorClasses}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border ${bg}`}>
       {label}: {confidence}%
     </span>
   );
 }
 
+// ─── Treatment Card ──────────────────────────────────────────────────────────
+function TreatmentCard({ title, content, icon, iconBg, hoverBorder }: {
+  title: string;
+  content: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  hoverBorder: string;
+}) {
+  return (
+    <div className={`bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 hover:shadow-md ${hoverBorder}`}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+          {icon}
+        </div>
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      </div>
+      <p className="text-sm text-gray-600 leading-relaxed">{content}</p>
+    </div>
+  );
+}
+
+// ─── Main App ────────────────────────────────────────────────────────────────
 function App() {
   const [species, setSpecies] = useState<SpeciesInfo[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState('');
@@ -170,17 +317,17 @@ function App() {
   const [result, setResult] = useState<DiagnosisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load species on mount
   useEffect(() => {
     fetch(`${API_URL}/api/species`)
       .then(res => res.json())
       .then(data => setSpecies(data.species || []))
       .catch(err => {
         console.error('Failed to load species:', err);
-        setError('Could not connect to the server. Make sure the backend is running on port 3001.');
+        setError('Could not connect to the server. Please ensure the backend is running.');
       });
   }, []);
 
@@ -194,11 +341,14 @@ function App() {
     setAppState('uploading');
     setUploadedFileName(file.name);
 
-    // Preview
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
-    // Upload
+    // Convert to base64 for PDF embedding
+    const reader = new FileReader();
+    reader.onload = () => setImageDataUrl(reader.result as string);
+    reader.readAsDataURL(file);
+
     const formData = new FormData();
     formData.append('image', file);
     formData.append('species', selectedSpecies);
@@ -212,7 +362,7 @@ function App() {
       if (!res.ok) {
         const errData = await res.json();
         if (errData.error === 'BLURRY_IMAGE') {
-          setError(`📸 ${errData.message} (Sharpness score: ${errData.variance}, minimum: ${errData.threshold})`);
+          setError(`The uploaded image appears to be out of focus (sharpness: ${errData.variance}, required: ${errData.threshold}). Please upload a clearer photo.`);
           setAppState('select');
           return;
         }
@@ -238,6 +388,7 @@ function App() {
     setAppState('select');
     setResult(null);
     setError(null);
+    setImageDataUrl(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setUploadedFileName('');
@@ -247,244 +398,225 @@ function App() {
   const isHealthy = result?.diseaseKey?.includes('healthy');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-      {/* Header */}
-      <header className="border-b border-emerald-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-              </svg>
+    <div className="min-h-screen bg-gray-50">
+      {/* ── Header ── */}
+      <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+              {Icons.leaf}
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight">Crop Disease Identifier</h1>
-              <p className="text-xs text-gray-500">AI-powered leaf disease diagnosis</p>
-            </div>
+            <span className="text-sm font-semibold text-gray-900">Crop Disease Identifier</span>
           </div>
-          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-            100% Offline AI
+          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-md">
+            Offline
           </span>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        {/* Error */}
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        {/* ── Error Banner ── */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl px-5 py-4 flex items-start gap-3">
-            <svg className="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-red-800">{error}</p>
-            </div>
-            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-start gap-3">
+            <span className="text-red-500 mt-0.5 shrink-0">{Icons.alertTriangle}</span>
+            <p className="text-sm text-red-700 flex-1">{error}</p>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 shrink-0">
+              {Icons.x}
+            </button>
           </div>
         )}
 
-        {/* ─── STEP 1: Select Species ─── */}
+        {/* ── Select & Upload ── */}
         {(appState === 'select' || appState === 'uploading') && (
-          <div className="space-y-8">
-            {/* Species Selection */}
-            <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">New Diagnosis</h2>
-              <p className="text-gray-500 text-sm mb-6">Select the crop species, then upload a clear photo of the leaf.</p>
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">New Diagnosis</h2>
+              <p className="text-sm text-gray-500 mt-1">Select the crop type, then upload a clear photograph of the affected leaf.</p>
+            </div>
 
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Select Crop Species</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                    {species.map(sp => (
-                      <button
-                        key={sp.key}
-                        onClick={() => { setSelectedSpecies(sp.key); setError(null); }}
-                        className={`px-4 py-3 rounded-xl border text-sm font-semibold text-left transition-all ${selectedSpecies === sp.key
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm shadow-emerald-100 ring-1 ring-emerald-500'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                      >
-                        {sp.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Upload Area */}
-                <div className="p-8">
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={e => e.preventDefault()}
-                    onClick={() => {
-                      if (!selectedSpecies) { setError('Please select a crop species first.'); return; }
-                      fileInputRef.current?.click();
-                    }}
-                    className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center min-h-[280px] transition-all ${selectedSpecies
-                      ? 'border-gray-300 bg-gray-50/50 hover:bg-emerald-50/50 hover:border-emerald-300 cursor-pointer'
-                      : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                      }`}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      disabled={!selectedSpecies}
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileSelect(file);
-                      }}
-                    />
-
-                    {appState === 'uploading' ? (
-                      <div className="flex flex-col items-center gap-4">
-                        {previewUrl && (
-                          <img src={previewUrl} alt="Preview" className="w-32 h-32 object-cover rounded-xl shadow-md" />
-                        )}
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                          <span className="text-sm font-semibold text-gray-700">Analyzing {uploadedFileName}...</span>
-                        </div>
-                        <p className="text-xs text-gray-400">Running TTA inference (3 geometric variants)</p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
-                          <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                          </svg>
-                        </div>
-                        <p className="text-base font-semibold text-gray-800 mb-1">
-                          {selectedSpecies ? 'Click or drag an image here' : 'Select a species first'}
-                        </p>
-                        <p className="text-sm text-gray-400">JPEG, PNG, or WebP — up to 10MB</p>
-                      </>
-                    )}
-                  </div>
+            {/* Species Grid */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Crop Species</p>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                  {species.map(sp => (
+                    <button
+                      key={sp.key}
+                      onClick={() => { setSelectedSpecies(sp.key); setError(null); }}
+                      className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-all duration-150 ${selectedSpecies === sp.key
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600'
+                        : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                      {sp.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </section>
+            </div>
+
+            {/* Upload */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Upload Image</p>
+              </div>
+              <div className="p-6">
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={e => e.preventDefault()}
+                  onClick={() => {
+                    if (!selectedSpecies) { setError('Please select a crop species first.'); return; }
+                    fileInputRef.current?.click();
+                  }}
+                  className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-16 transition-all duration-200 ${selectedSpecies
+                    ? 'border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/30 cursor-pointer'
+                    : 'border-gray-200 bg-gray-50/50 opacity-50 cursor-not-allowed'
+                    }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={!selectedSpecies}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                  />
+
+                  {appState === 'uploading' ? (
+                    <div className="flex flex-col items-center gap-4">
+                      {previewUrl && (
+                        <img src={previewUrl} alt="Preview" className="w-28 h-28 object-cover rounded-lg border border-gray-200" />
+                      )}
+                      <div className="flex items-center gap-2.5 text-emerald-700">
+                        {Icons.loader}
+                        <span className="text-sm font-medium">Analyzing image...</span>
+                      </div>
+                      <p className="text-xs text-gray-400">Running TTA ensemble inference</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-gray-400 mb-3">{Icons.upload}</div>
+                      <p className="text-sm font-medium text-gray-700">
+                        {selectedSpecies ? 'Click to upload or drag and drop' : 'Select a crop species above'}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">JPEG, PNG, or WebP up to 10 MB</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* ─── RESULTS ─── */}
+        {/* ── Results ── */}
         {appState === 'results' && result && (
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="space-y-6 animate-in">
+            {/* Result Header */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${isHealthy
-                    ? 'text-emerald-700 bg-emerald-100 border border-emerald-200'
-                    : 'text-red-700 bg-red-100 border border-red-200'
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border ${isHealthy
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-red-50 text-red-700 border-red-200'
                     }`}>
-                    {isHealthy ? '✓ HEALTHY' : '⚠ DISEASE DETECTED'}
+                    {isHealthy ? 'Healthy' : 'Disease Detected'}
                   </span>
                   <ConfidenceBadge confidence={result.confidence} />
-                  <span className="text-xs text-gray-400 font-mono">Index: {result.classIndex}</span>
                 </div>
-                <h2 className="text-3xl font-black text-gray-900">{result.commonName}</h2>
-                <p className="text-sm text-gray-500 mt-1">{result.speciesName} — {result.diseaseName}</p>
+                <h2 className="text-2xl font-semibold text-gray-900">{result.commonName}</h2>
+                <p className="text-sm text-gray-500 mt-0.5">{result.speciesName} — {result.diseaseName}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <button
-                  onClick={() => exportPDF(result)}
-                  className="px-4 py-2.5 bg-white text-gray-700 font-semibold text-sm rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                  onClick={() => exportPDF(result, imageDataUrl)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
+                  {Icons.download}
                   Export PDF
                 </button>
                 <button
                   onClick={handleReset}
-                  className="px-5 py-2.5 bg-emerald-600 text-white font-semibold text-sm rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200"
+                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
                 >
                   New Scan
                 </button>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-[1fr_1.5fr] gap-6">
-              {/* Uploaded Image */}
-              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="grid md:grid-cols-[320px_1fr] gap-6">
+              {/* Image */}
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {previewUrl && (
-                  <img src={previewUrl} alt="Analyzed Leaf" className="w-full aspect-square object-cover" />
+                  <img src={previewUrl} alt="Analyzed leaf" className="w-full aspect-square object-cover" />
                 )}
-                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50">
+                <div className="px-4 py-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500 font-medium truncate">{uploadedFileName}</p>
                 </div>
               </div>
 
-              {/* Diagnosis Section */}
               <div className="space-y-4">
                 {/* Symptoms */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <span className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                      </svg>
-                    </span>
-                    Symptoms
-                  </h3>
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                      {Icons.search}
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900">Symptoms</h3>
+                  </div>
                   <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.symptoms}</p>
                 </div>
 
-                {/* Treatment */}
+                {/* Treatment Cards */}
                 {!isHealthy && (
                   <div className="grid sm:grid-cols-2 gap-4">
-                    {/* Cultural Control */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-emerald-300 transition-colors">
-                      <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">🌱</span>
-                        Cultural Control
-                      </h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.cultural_control}</p>
-                    </div>
-
-                    {/* Chemical Control */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-purple-300 transition-colors">
-                      <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">🧪</span>
-                        Chemical Control
-                      </h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.chemical_control}</p>
-                    </div>
-
-                    {/* Biological Control */}
+                    <TreatmentCard
+                      title="Cultural Control"
+                      content={result.treatment.cultural_control}
+                      icon={Icons.sprout}
+                      iconBg="bg-emerald-50 text-emerald-600"
+                      hoverBorder="hover:border-emerald-200"
+                    />
+                    <TreatmentCard
+                      title="Chemical Control"
+                      content={result.treatment.chemical_control}
+                      icon={Icons.flask}
+                      iconBg="bg-violet-50 text-violet-600"
+                      hoverBorder="hover:border-violet-200"
+                    />
                     {result.treatment.biological_control && (
-                      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-teal-300 transition-colors">
-                        <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                          <span className="w-7 h-7 bg-teal-100 rounded-lg flex items-center justify-center text-teal-600">🦠</span>
-                          Biological Control
-                        </h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.biological_control}</p>
-                      </div>
+                      <TreatmentCard
+                        title="Biological Control"
+                        content={result.treatment.biological_control}
+                        icon={Icons.microscope}
+                        iconBg="bg-teal-50 text-teal-600"
+                        hoverBorder="hover:border-teal-200"
+                      />
                     )}
-
-                    {/* Prevention */}
                     {result.treatment.prevention && (
-                      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:border-amber-300 transition-colors">
-                        <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                          <span className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600">🛡️</span>
-                          Prevention
-                        </h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">{result.treatment.prevention}</p>
-                      </div>
+                      <TreatmentCard
+                        title="Prevention"
+                        content={result.treatment.prevention}
+                        icon={Icons.shield}
+                        iconBg="bg-amber-50 text-amber-600"
+                        hoverBorder="hover:border-amber-200"
+                      />
                     )}
                   </div>
                 )}
 
-                {/* Healthy message */}
+                {/* Healthy State */}
                 {isHealthy && (
-                  <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-8 text-center">
-                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200">
-                      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-8 text-center">
+                    <div className="w-14 h-14 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
+                      {Icons.check}
                     </div>
-                    <h3 className="text-xl font-bold text-emerald-800 mb-2">Your crop looks healthy!</h3>
-                    <p className="text-sm text-emerald-600">{result.treatment.cultural_control}</p>
+                    <h3 className="text-lg font-semibold text-emerald-900 mb-2">No disease detected</h3>
+                    <p className="text-sm text-emerald-700 max-w-md mx-auto">{result.treatment.cultural_control}</p>
                   </div>
                 )}
               </div>
@@ -493,8 +625,8 @@ function App() {
         )}
 
         {/* Footer */}
-        <div className="mt-12 text-center text-xs text-gray-400 pb-8">
-          <p>All inference runs 100% locally on your device • No data is sent to the cloud</p>
+        <div className="mt-16 text-center text-xs text-gray-400 pb-8">
+          <p>All analysis runs locally on your device. No data is transmitted externally.</p>
         </div>
       </main>
     </div>
