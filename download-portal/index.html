@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Crop Health Monitor</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+            color: #ffffff;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(14, 116, 144, 0.15) 0%, transparent 40%);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .delay-100 { animation-delay: 100ms; opacity: 0; }
+        .delay-200 { animation-delay: 200ms; opacity: 0; }
+        .delay-300 { animation-delay: 300ms; opacity: 0; }
+        
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.05) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            transform: rotate(30deg) translate(-100%, -100%);
+            transition: all 0.5s;
+        }
+        
+        .shimmer:hover::after {
+            transform: rotate(30deg) translate(50%, 50%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-view" class="w-full max-w-md glass-panel rounded-3xl p-8 z-10 transition-all duration-500">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
+                <i data-lucide="leaf" class="text-white w-8 h-8"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-2">Authorized Access</h1>
+            <p class="text-slate-400 text-sm">Please enter the access code to download the application binaries.</p>
+        </div>
+
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label for="code" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Access Code</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="lock" class="text-slate-500 w-5 h-5"></i>
+                    </div>
+                    <input type="password" id="code" required
+                        class="block w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                        placeholder="Enter any code to continue">
+                </div>
+                <p id="error-msg" class="text-red-400 text-xs mt-2 hidden">Incorrect code. Please try again.</p>
+            </div>
+            <button type="submit" 
+                class="w-full py-3.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                <span>Unlock Downloads</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- DOWNLOADS SCREEN (Hidden initially) -->
+    <div id="downloads-view" class="hidden w-full max-w-5xl z-10">
+        <div class="text-center mb-16 fade-in">
+            <div class="inline-flex items-center justify-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-emerald-500/20">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> Access Verified
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">Crop Health Monitor v1.0</h1>
+            <p class="text-slate-400 text-lg max-w-2xl mx-auto">Select your operating system below to download the local inference engine and dashboard.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            
+            <!-- Mac Download Card -->
+            <div class="glass-panel rounded-3xl p-8 fade-in delay-100 flex flex-col relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-white/10"></div>
+                
+                <div class="flex items-center justify-between mb-8">
+                    <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700">
+                        <i data-lucide="monitor" class="text-slate-300 w-7 h-7 hidden group-hover:block transition-all"></i>
+                        <svg class="w-7 h-7 text-slate-300 group-hover:hidden transition-all" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.188 15.684c-.424.238-.888.423-1.373.548-.485.125-.99.188-1.503.188-.415 0-.82-.047-1.206-.139a5.132 5.132 0 01-1.127-.373c-.021-.01-.036-.021-.052-.036l-.01-.01-.355-.177a.666.666 0 00-.281-.082.68.68 0 00-.312.067l-.374.198c-.011.006-.021.011-.037.016l-.057.021a4.935 4.935 0 01-1.071.218 5.485 5.485 0 01-1.154-.041 5.467 5.467 0 01-1.121-.265 5.512 5.512 0 01-1.018-.458.736.736 0 01-.271-.271c-.068-.125-.098-.26-.088-.396.01-.136.057-.26.136-.364l.021-.026c.406-.52.753-1.096 1.034-1.725.281-.629.49-1.298.624-1.996a8.913 8.913 0 00.198-1.986c0-.5-.047-.999-.14-1.487a5.275 5.275 0 00-.422-1.372 4.095 4.095 0 00-.733-1.139 3.42 3.42 0 00-.998-.718l-.052-.026-.062-.015c-.255-.067-.5-.166-.723-.291.562-.114 1.138-.156 1.716-.124.577.031 1.144.134 1.685.306.904.28 1.745.748 2.479 1.385l.036.031c.364-.479.791-.904 1.269-1.263l.036-.026c.775-.551 1.637-.955 2.545-1.19a8.96 8.96 0 012.636-.213l.052.005c.166.01.327.036.489.078.161.042.317.098.468.166a.711.711 0 01.306.27.702.702 0 01.073.395c-.015.135-.067.26-.15.364-.083.104-.198.187-.328.24l-.062.021c-.493.161-1.002.259-1.52.291-.518.031-1.04-.006-1.554-.109-.514-.104-1.018-.28-1.503-.52a5.495 5.495 0 00-1.242-.451.706.706 0 00-.323-.005.7.7 0 00-.27.104c-.458.291-.873.65-1.227 1.066l-.031.036c-.452.54-.805 1.143-1.05 1.787-.244.644-.384 1.32-.416 2.016a8.887 8.887 0 00.104 2.106c.073.499.208.986.401 1.455.192.469.447.915.759 1.321.312.406.676.77 1.082 1.082.406.312.852.567 1.321.759.469.192.956.327 1.455.401a6.626 6.626 0 001.066.041 6.323 6.323 0 001.014-.145l.053-.016c.15-.052.285-.125.405-.218.12-.094.218-.213.286-.349l.021-.047c.078-.182.093-.38.041-.572a.707.707 0 00-.218-.38l-.052-.047c-.634-.582-1.127-1.304-1.445-2.11-.318-.806-.462-1.673-.427-2.541l.006-.114c0-.187.057-.369.161-.519s.25-.265.426-.333l.115-.036c.863-.208 1.731-.416 2.6-.624.868-.208 1.742-.395 2.615-.556l.115-.021c.176-.021.353 0 .509.062a.702.702 0 01.323.239l.047.052c.265.343.468.733.603 1.15.135.416.208.852.218 1.294.01.442-.042.883-.156 1.31a5.619 5.619 0 01-.447 1.242l-.015.031c-.135.244-.312.463-.52.65-.208.187-.452.338-.718.442l-.125.041c-1.164.333-2.313.728-3.41 1.18l-.119.052c-.171.078-.322.187-.442.322a.728.728 0 00-.182.426l-.005.125c.01.998.421 1.944 1.154 2.646.733.702 1.716 1.076 2.73 1.04h.166c.218-.031.426-.089.624-.172z"/></svg>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block bg-slate-800 text-slate-300 text-xs font-bold px-3 py-1 rounded-full border border-slate-700">macOS (Apple Silicon)</span>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-2">Mac Installer</h2>
+                <div class="flex items-center gap-4 text-sm text-slate-400 mb-8 border-b border-slate-800 pb-6">
+                    <span class="flex items-center gap-1"><i data-lucide="hard-drive" class="w-4 h-4"></i> 173.1 MB</span>
+                    <span class="flex items-center gap-1"><i data-lucide="file" class="w-4 h-4"></i> .dmg</span>
+                </div>
+
+                <div class="flex-grow flex flex-col justify-end">
+                    <p class="text-slate-500 text-sm mb-4">Requires macOS 12+ (M1/M2/M3 chips only)</p>
+                    <a href="Crop Disease Identifier-1.0.0-arm64.dmg" download
+                        class="w-full py-4 px-4 bg-white hover:bg-slate-200 text-slate-900 font-bold rounded-xl transition-all flex items-center justify-between group shimmer shadow-lg hover:shadow-white/20">
+                        <span>Download for Mac</span>
+                        <i data-lucide="download" class="w-5 h-5 group-hover:translate-y-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Windows Download Card -->
+            <div class="glass-panel rounded-3xl p-8 fade-in delay-200 flex flex-col relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-sky-500/10"></div>
+                
+                <div class="flex items-center justify-between mb-8">
+                    <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700">
+                        <i data-lucide="layout-grid" class="text-sky-400 w-7 h-7"></i>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block bg-slate-800 text-sky-400 text-xs font-bold px-3 py-1 rounded-full border border-slate-700">Windows (x64)</span>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-2">Windows Setup</h2>
+                <div class="flex items-center gap-4 text-sm text-slate-400 mb-8 border-b border-slate-800 pb-6">
+                    <span class="flex items-center gap-1"><i data-lucide="hard-drive" class="w-4 h-4"></i> 187.0 MB</span>
+                    <span class="flex items-center gap-1"><i data-lucide="file" class="w-4 h-4"></i> .exe</span>
+                </div>
+
+                <div class="flex-grow flex flex-col justify-end">
+                    <p class="text-slate-500 text-sm mb-4">Requires Windows 10/11 (64-bit)</p>
+                    <a href="Crop Disease Identifier Setup 1.0.0.exe" download
+                        class="w-full py-4 px-4 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition-all flex items-center justify-between group shimmer shadow-lg shadow-sky-600/20">
+                        <span>Download for Windows</span>
+                        <i data-lucide="download" class="w-5 h-5 group-hover:translate-y-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-16 text-center text-slate-500 text-sm fade-in delay-300">
+            <p>Ensure you have at least 500MB of free disk space for the local AI models.</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Simple auth logic
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const code = document.getElementById('code').value;
+            
+            // In a real app this would be verified via backend. 
+            // For this basic portal, any non-empty code works as requested.
+            if(code.trim() !== '') {
+                // Hide login
+                const loginView = document.getElementById('login-view');
+                loginView.style.opacity = '0';
+                loginView.style.transform = 'scale(0.95)';
+                
+                setTimeout(() => {
+                    loginView.classList.add('hidden');
+                    // Show downloads
+                    const downloadsView = document.getElementById('downloads-view');
+                    downloadsView.classList.remove('hidden');
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
