@@ -12,7 +12,7 @@ export default function Navbar() {
     const isActive = (href: string) => pathname === href;
 
     return (
-        <nav className="flex items-center justify-between px-8 py-4 w-full sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 transition-all">
+        <nav className="flex items-center justify-between px-8 py-4 w-full sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all">
             <div className="flex items-center gap-2">
                 <Link href="/" className="text-dark text-xl font-bold flex items-center gap-2 group">
                     <div className="w-8 h-8 rounded-lg bg-brand text-white flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
